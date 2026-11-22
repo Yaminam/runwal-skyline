@@ -1,0 +1,32 @@
+import type { MetadataRoute } from "next";
+
+const BASE = "https://runwal-skyline.vercel.app";
+
+const RESIDENCES = [
+  "runwal-malabar",
+  "runwal-raaya",
+  "runwal-timeless",
+  "runwal-rare",
+  "runwal-auris",
+  "runwal-sanctuary",
+  "runwal-one",
+  "runwal-zenith",
+  "runwal-lands-end",
+  "runwal-the-central-park",
+  "r-square-andheri",
+  "r-square-mulund",
+];
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  const pages = ["", "/residences", "/places", "/legacy", "/enquire"].map((p) => ({
+    url: `${BASE}${p}`,
+    changeFrequency: "monthly" as const,
+    priority: p === "" ? 1 : 0.8,
+  }));
+  const residences = RESIDENCES.map((slug) => ({
+    url: `${BASE}/residences/${slug}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+  return [...pages, ...residences];
+}
