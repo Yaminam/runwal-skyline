@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useRef, type ComponentProps } from "react";
 import { closeGate, openGate } from "@/lib/gate";
 import { prefersReducedMotion } from "@/lib/motion";
-import { scrollToTop } from "../SmoothScroll";
+import { scrollToEl, scrollToTop } from "../SmoothScroll";
 
 type Ctx = { go: (href: string) => void };
 const TransitionCtx = createContext<Ctx>({ go: () => {} });
@@ -19,6 +19,15 @@ const LABELS: Record<string, string> = {
   "/legacy": "Legacy",
   "/places": "Places",
   "/enquire": "Enquire",
+  "/insights": "Insights",
+  "/customers": "Customer Corner",
+  "/nri": "NRI Corner",
+  "/club-oasis": "Club Oasis",
+  "/investors": "Investors",
+  "/careers": "Careers",
+  "/contact": "Contact",
+  "/faq": "FAQs",
+  "/about/csr": "CSR",
 };
 
 function labelFor(path: string) {
@@ -46,7 +55,9 @@ export function TransitionProvider({ children }: { children: React.ReactNode }) 
       const path = href.split(/[?#]/)[0] || "/";
       if (busy.current) return;
       if (path === pathname) {
-        if (href.includes("?") || href.includes("#")) router.push(href, { scroll: false });
+        const hash = href.includes("#") ? href.slice(href.indexOf("#")) : "";
+        if (href.includes("?") || hash) router.push(href, { scroll: false });
+        if (hash.length > 1) setTimeout(() => scrollToEl(hash, -90), 60);
         return;
       }
       if (prefersReducedMotion() || !root.current) {
@@ -79,6 +90,9 @@ export function TransitionProvider({ children }: { children: React.ReactNode }) 
     const slats = el.querySelectorAll(".tr-slat");
     const id = requestAnimationFrame(() => {
       ScrollTrigger.refresh();
+      // honour #anchors on the destination page (e.g. /legacy#awards)
+      const hash = window.location.hash;
+      if (hash.length > 1) setTimeout(() => scrollToEl(hash, -90), 700);
       gsap
         .timeline({ delay: 0.2 })
         .to(label.current, { yPercent: -110, duration: 0.5, ease: "expo.in" }, 0)

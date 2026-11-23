@@ -2,15 +2,22 @@
 
 import { useEffect, useRef } from "react";
 import { prefersReducedMotion } from "@/lib/motion";
+import { LANDMARKS } from "../three/skyline-state";
 import { useTransition } from "./Transition";
 
 type Tower = { slug: string; name: string; area: string };
 type Win = { x: number; y: number; ambient: number; cur: number };
-type Bldg = { x: number; w: number; h: number; tower?: Tower };
+type Bldg = { x: number; w: number; h: number; depth: number; tower?: Tower };
 
-const CELL_W = 7;
-const CELL_H = 9;
+/** Baked by _tools/realcity/bake.py from OpenStreetMap: [x 0..1 north->south, width, height m, depth 0 sea..1 inland] */
+type Elevation = { latN: number; latS: number; maxH: number; b: Array<[number, number, number, number]> };
+
+const CELL_W = 6;
+const CELL_H = 8;
 const RADIUS = 150;
+
+let elevation: Promise<Elevation> | null = null;
+const loadElevation = () => (elevation ??= fetch("/data/skyline-elevation.json").then((r) => r.json() as Promise<Elevation>));
 
 function rng(seed: number) {
   let s = seed;
@@ -19,6 +26,9 @@ function rng(seed: number) {
     return (s - 1) / 2147483646;
   };
 }
+
+// where each residence stands on the skyline (Runwal Central Park is in Pune: shown at the far edge)
+const PLACE: Record<string, { lat: number; floors: number }> = Object.fromEntries(LANDMARKS.map((l) => [l.slug, { lat: l.lat, floors: l.floors }]));
 
 /**
  * The footer skyline: Mumbai at night, drawn on a canvas. A few windows are lit at random and slowly
@@ -67,38 +77,44 @@ export function NightSkyline({ towers }: { towers: Tower[] }) {
       cv.style.height = `${H}px`;
 
       bldgs = [];
-      // Runwal towers spread across the width, ordinary blocks filling the gaps
-      const slots = towers.map((t, i) => ({ t, x: ((i + 0.5) / towers.length + (r() - 0.5) * 0.045) * W }));
-      let x = -10;
-      let next = 0;
-      while (x < W + 10) {
-        const slot = slots[next];
-        if (slot && x + 30 > slot.x - 20) {
-          const w = 30 + Math.round(r() * 10);
-          bldgs.push({ x: Math.round(slot.x - w / 2), w, h: Math.round(H * (0.58 + r() * 0.36)), tower: slot.t });
-          x = slot.x + w / 2 + 3 + r() * 4;
-          next++;
-          continue;
-        }
-        const w = 14 + Math.round(r() * 38);
-        const tall = r() < 0.3;
-        const h = Math.round(H * (tall ? 0.4 + r() * 0.32 : 0.12 + r() * 0.32));
-        const room = slot ? slot.x - 22 - x : Infinity;
-        const bw = Math.max(10, Math.min(w, room));
-        bldgs.push({ x: Math.round(x), w: bw, h });
-        x += bw + 2 + Math.round(r() * 4);
+      const data = ele;
+      if (!data) return;
+      const span = data.latN - data.latS;
+      const scaleH = (H * 0.86) / data.maxH;
+      const narrow = W < 700;
+      const rows = narrow ? data.b.filter((b) => b[2] >= 45) : data.b;
+      // the real city: far (inland) buildings first, the seafront last
+      for (const [x, w, h, d] of rows) {
+        bldgs.push({ x: Math.round(x * W), w: Math.max(narrow ? 3 : 4, Math.round(w * W * (narrow ? 1.6 : 2.2))), h: Math.max(6, Math.round(h * scaleH)), depth: d });
+      }
+      // Runwal towers at their real places along the coast, nudged apart so each can be pointed at
+      const placed = towers
+        .map((t) => {
+          const at = PLACE[t.slug];
+          return { t, x: at ? (data.latN - at.lat) / span : 0.985, floors: at?.floors ?? 40 };
+        })
+        .sort((a, b) => a.x - b.x);
+      const gap = narrow ? 0.07 : 0.03;
+      for (let i = 1; i < placed.length; i++) placed[i].x = Math.max(placed[i].x, placed[i - 1].x + gap);
+      const over = placed.length ? placed[placed.length - 1].x - 0.985 : 0;
+      if (over > 0) placed.forEach((p, i) => (p.x -= over * (i / Math.max(1, placed.length - 1))));
+      for (const p of placed) {
+        const w = narrow ? 12 : 16 + Math.round(r() * 4);
+        const h = Math.min(H * 0.94, Math.max(H * 0.42, p.floors * 3.4 * scaleH * 1.25));
+        bldgs.push({ x: Math.round(p.x * W - w / 2), w, h: Math.round(h), depth: -1, tower: p.t });
       }
 
       // windows
       wins = [];
       for (const b of bldgs) {
         const top = H - b.h;
-        const cols = Math.floor((b.w - 4) / CELL_W);
+        if (b.w < 9 && !b.tower) continue;
+        const cols = Math.max(1, Math.floor((b.w - 3) / CELL_W));
         const rows = Math.floor((b.h - 8) / CELL_H);
-        const ox = b.x + (b.w - cols * CELL_W) / 2 + 2;
+        const ox = b.x + (b.w - cols * CELL_W) / 2 + 1.5;
         for (let i = 0; i < cols; i++) {
           for (let j = 0; j < rows; j++) {
-            const lit = r() < (b.tower ? 0.3 : 0.1) ? 0.25 + r() * 0.55 : 0;
+            const lit = r() < (b.tower ? 0.32 : 0.09 + (1 - Math.max(0, b.depth)) * 0.06) ? 0.22 + r() * 0.55 : 0;
             wins.push({ x: ox + i * CELL_W, y: top + 8 + j * CELL_H, ambient: lit, cur: lit });
           }
         }
@@ -114,8 +130,11 @@ export function NightSkyline({ towers }: { towers: Tower[] }) {
       for (const b of bldgs) {
         const top = H - b.h;
         const g = b2.createLinearGradient(0, top, 0, H);
-        g.addColorStop(0, b.tower ? "#2a2f38" : "#1c2027");
-        g.addColorStop(1, "#111419");
+        // inland buildings recede into the night, the seafront reads lighter
+        const near = b.tower ? 1 : 1 - b.depth;
+        const c0 = Math.round(19 + near * 16);
+        g.addColorStop(0, b.tower ? "#2c313a" : `rgb(${c0}, ${c0 + 4}, ${c0 + 10})`);
+        g.addColorStop(1, "#101318");
         b2.fillStyle = g;
         b2.fillRect(b.x, top, b.w, b.h);
         if (b.tower) {
@@ -213,7 +232,15 @@ export function NightSkyline({ towers }: { towers: Tower[] }) {
       if (hovered?.tower) goRef.current(`/residences/${hovered.tower.slug}`);
     };
 
-    build();
+    let ele: Elevation | null = null;
+    let alive = true;
+    loadElevation()
+      .then((d) => {
+        if (!alive) return;
+        ele = d;
+        build();
+      })
+      .catch(() => {});
     const ro = new ResizeObserver(() => build());
     ro.observe(host);
     const io = new IntersectionObserver(([e]) => {
@@ -225,6 +252,7 @@ export function NightSkyline({ towers }: { towers: Tower[] }) {
     host.addEventListener("pointerleave", onLeave);
     cv.addEventListener("click", onClick);
     return () => {
+      alive = false;
       cancelAnimationFrame(raf);
       ro.disconnect();
       io.disconnect();
@@ -238,7 +266,13 @@ export function NightSkyline({ towers }: { towers: Tower[] }) {
     <div ref={wrap} className="relative h-56 w-full md:h-72">
       {/* afterglow on the horizon */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-full bg-[radial-gradient(60%_70%_at_50%_100%,rgba(242,166,90,0.14),transparent_70%)]" aria-hidden />
-      <canvas ref={canvas} className="absolute inset-0" aria-label="Mumbai skyline at night. Move your cursor to light up the windows; Runwal towers are marked with an amber crown." role="img" />
+      <canvas
+        ref={canvas}
+        className="absolute inset-0"
+        aria-label="The real Mumbai skyline at night, seen from the sea. Move your cursor to light up the windows; Runwal towers are marked with an amber crown."
+        role="img"
+      />
+      <p className="kicker pointer-events-none absolute right-6 top-0 text-[0.55rem]! text-stone/30 md:right-10">Mumbai from the sea &middot; building heights &copy; OpenStreetMap</p>
       <div
         ref={tip}
         data-on="0"

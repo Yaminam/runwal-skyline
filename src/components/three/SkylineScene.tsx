@@ -1,20 +1,11 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { clamp, pointer, smoothstep } from "@/lib/motion";
-import {
-  BEAM_FRAG,
-  BEAM_VERT,
-  SKY_FRAG,
-  SKY_VERT,
-  cityUniforms,
-  landAt,
-  makeBuildingMaterial,
-  makeGroundMaterial,
-  makeRiseDepthMaterial,
-} from "./city-materials";
+import { buildTallGeometry, lowRiseMatrices, metresToUnits, parseCity } from "./city-data";
+import { BEAM_FRAG, BEAM_VERT, SKY_FRAG, SKY_VERT, cityUniforms, makeBuildingMaterial, makeGroundMaterial, makeRiseDepthMaterial } from "./city-materials";
 import { LANDMARKS, geo, labels, skyline, type Landmark } from "./skyline-state";
 
 /* ---------------------------------------------------------------- time of day */
@@ -48,13 +39,13 @@ const DUSK: Phase = {
   top: "#46598f",
   horizon: "#f2b48a",
   glow: "#ffbf8a",
-  sea: "#6c7894",
+  sea: "#8d96b0",
   sun: "#ffb27a",
-  sunI: 2.1,
-  hemiSky: "#a7abc9",
-  hemiGround: "#7a6458",
-  hemiI: 0.75,
-  sunDir: [-0.95, 0.12, -0.15],
+  sunI: 2.5,
+  hemiSky: "#c3c3dc",
+  hemiGround: "#8f7668",
+  hemiI: 1.35,
+  sunDir: [-0.9, 0.32, -0.2],
 };
 const NIGHT: Phase = {
   top: "#06080c",
@@ -85,16 +76,16 @@ const PH = [DAY, DUSK, NIGHT].map((p) => ({
 
 /* ---------------------------------------------------------------- camera path */
 
-// [progress, camera position, look-at]
+// [progress, camera position, look-at] over the real map (model units, see city-data.ts)
 const KEYS: Array<[number, [number, number, number], [number, number, number]]> = [
-  [0.0, [-46, 33, 60], [-17, 1, 4]],
-  [0.16, [-36, 19, 40], [-13, 3, 18]],
-  [0.3, [-30, 17, 22], [-6, 3, 6]],
-  [0.44, [8, 21, 8], [-10, 2, -16]],
-  [0.57, [3, 20, -4], [-4, 2, -24]],
-  [0.7, [1, 23, -8], [20, 3, -31]],
-  [0.82, [7, 21, -14], [24, 3, -31]],
-  [1.0, [-22, 58, 32], [6, 0, -10]],
+  [0.0, [-24, 13, 52], [-8, 0, 12]],
+  [0.16, [-23.5, 6.5, 31], [-13.5, 0.8, 21]],
+  [0.3, [-21, 7.5, 18.5], [-6, 0.6, 9]],
+  [0.44, [3, 7, 2], [-9, 0.6, -14]],
+  [0.57, [1, 6.5, -9], [-5, 0.6, -23]],
+  [0.7, [7, 6, -17], [21, 0.8, -31]],
+  [0.82, [13, 4.5, -23], [24, 0.8, -31]],
+  [1.0, [-18, 30, 24], [4, 0, -10]],
 ];
 const POS = new THREE.CatmullRomCurve3(KEYS.map((k) => new THREE.Vector3(...k[1])), false, "centripetal");
 const LOOK = new THREE.CatmullRomCurve3(KEYS.map((k) => new THREE.Vector3(...k[2])), false, "centripetal");
@@ -113,130 +104,96 @@ function pathParam(p: number) {
   return 1;
 }
 
-/* ---------------------------------------------------------------- city */
+/* ---------------------------------------------------------------- real city */
 
-function rand(seed: number) {
-  let s = seed;
-  return () => {
-    s = (s * 16807) % 2147483647;
-    return (s - 1) / 2147483646;
-  };
-}
+/** When the OSM data and the ground texture arrived (performance.now()), so the intro waits for them. */
+const arrived = { city: -1, ground: -1 };
 
-const HUBS: Array<[number, number, number, number]> = [
-  // x, z, radius, extra height
-  [-9, 12, 7, 7], // Worli / Lower Parel
-  [-14, 24, 4, 4], // Malabar Hill / Cuffe Parade
-  [-4, 1, 6, 7], // BKC
-  [-7, -13, 6, 4], // Andheri
-  [-6, -24, 6, 4], // Malad / Goregaon
-  [14, -19, 5, 4], // Mulund
-  [21, -31, 7, 6], // Thane
-  [9, -6, 4, 3], // Ghatkopar
-];
-
-function buildCity(mobile: boolean) {
-  const r = rand(1978);
-  const items: Array<{ x: number; z: number; w: number; d: number; h: number; seed: number; tone: number }> = [];
-  const B = 3.2;
-  const keepOut = LANDMARKS.map((l) => geo(l.lat, l.lon));
-  for (let bx = -34; bx < 48; bx += B) {
-    for (let bz = -58; bz < 38; bz += B) {
-      if (mobile && r() < 0.45) continue;
-      const x0 = bx + 0.6;
-      const z0 = bz + 0.6;
-      const size = B - 0.6;
-      const split = r() < 0.55 ? 2 : 1;
-      const lot = size / split;
-      for (let i = 0; i < split; i++) {
-        for (let j = 0; j < split; j++) {
-          if (r() < 0.12) continue; // open plots and parks
-          const cx = x0 + lot * (i + 0.5);
-          const cz = z0 + lot * (j + 0.5);
-          const w = lot * (0.55 + r() * 0.35);
-          const d = lot * (0.55 + r() * 0.35);
-          if (!landAt(cx - w / 2, cz - d / 2, 0.3) || !landAt(cx + w / 2, cz + d / 2, 0.3) || !landAt(cx - w / 2, cz + d / 2, 0.3) || !landAt(cx + w / 2, cz - d / 2, 0.3)) continue;
-          if (keepOut.some(([kx, kz]) => Math.hypot(kx - cx, kz - cz) < 2.4)) continue;
-          let boost = 0;
-          for (const [hx, hz, hr, hh] of HUBS) {
-            const dd = Math.hypot(hx - cx, hz - cz);
-            boost += Math.exp(-(dd * dd) / (hr * hr)) * hh;
-          }
-          const far = Math.hypot(cx + 2, cz + 6) / 50;
-          const h = 0.45 + Math.pow(r(), 3) * 3.4 + boost * (0.25 + r() * 0.75) - far * 0.6;
-          items.push({ x: cx, z: cz, w, d, h: Math.max(0.35, h), seed: r(), tone: r() });
-        }
-      }
-    }
-  }
-  return items;
-}
-
-function City({ mobile }: { mobile: boolean }) {
-  const ref = useRef<THREE.InstancedMesh>(null);
-  const items = useMemo(() => buildCity(mobile), [mobile]);
-  const geom = useMemo(() => {
+function RealCity({ mobile }: { mobile: boolean }) {
+  const [data, setData] = useState<{ tall: THREE.BufferGeometry; low: { matrices: Float32Array; seeds: Float32Array } } | null>(null);
+  const lowRef = useRef<THREE.InstancedMesh>(null);
+  const tallMat = useMemo(() => makeBuildingMaterial({ mode: "merged", color: "#fbfaf7" }), []);
+  const lowMat = useMemo(() => makeBuildingMaterial({ mode: "instanced", color: "#ece8e0" }), []);
+  const depth = useMemo(() => makeRiseDepthMaterial(), []);
+  const box = useMemo(() => {
     const g = new THREE.BoxGeometry(1, 1, 1);
     g.translate(0, 0.5, 0);
-    g.setAttribute("aSeed", new THREE.InstancedBufferAttribute(new Float32Array(items.map((i) => i.seed)), 1));
     return g;
-  }, [items]);
-  const mat = useMemo(() => makeBuildingMaterial({ instanced: true }), []);
-  const depth = useMemo(() => makeRiseDepthMaterial(), []);
+  }, []);
 
   useEffect(() => {
-    const mesh = ref.current;
-    if (!mesh) return;
-    const m = new THREE.Matrix4();
-    const q = new THREE.Quaternion();
-    const col = new THREE.Color();
-    items.forEach((it, i) => {
-      m.compose(new THREE.Vector3(it.x, 0, it.z), q, new THREE.Vector3(it.w, it.h, it.d));
-      mesh.setMatrixAt(i, m);
-      // a few warm-grey and blue-grey "models" among the white, like an architect's massing study
-      col.set(it.tone < 0.08 ? "#e6e1d8" : it.tone < 0.13 ? "#dde2e8" : "#ffffff");
-      mesh.setColorAt(i, col);
-    });
+    let alive = true;
+    fetch(mobile ? "/data/mumbai-city-lite.bin" : "/data/mumbai-city.bin")
+      .then((r) => r.arrayBuffer())
+      .then((buf) => {
+        if (!alive) return;
+        const bin = parseCity(buf);
+        const tall = buildTallGeometry(bin);
+        const low = lowRiseMatrices(bin);
+        arrived.city = performance.now();
+        setData({ tall, low });
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [mobile]);
+
+  useEffect(() => {
+    const mesh = lowRef.current;
+    if (!mesh || !data) return;
+    mesh.instanceMatrix.array.set(data.low.matrices);
     mesh.instanceMatrix.needsUpdate = true;
-    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    mesh.geometry.setAttribute("aSeed", new THREE.InstancedBufferAttribute(data.low.seeds, 1));
     mesh.customDepthMaterial = depth;
     mesh.computeBoundingSphere();
-  }, [items, depth]);
+  }, [data, depth]);
 
-  return <instancedMesh ref={ref} args={[geom, mat, items.length]} castShadow receiveShadow frustumCulled={false} />;
+  if (!data) return null;
+  return (
+    <>
+      <instancedMesh ref={lowRef} args={[box, lowMat, data.low.seeds.length]} receiveShadow />
+      <mesh geometry={data.tall} material={tallMat} customDepthMaterial={depth} castShadow receiveShadow />
+    </>
+  );
 }
 
 /* ---------------------------------------------------------------- Runwal towers */
 
+/** Model height of a Runwal tower: real storeys, nudged up 35% so the hero towers read first. */
+const towerH = (l: Landmark) => Math.max(1.3, metresToUnits(l.floors * 3.4) * 1.35);
+const TOWER_W = 0.3;
+
 function towerParts(l: Landmark): Array<{ p: [number, number, number]; s: [number, number, number] }> {
-  const { w, h } = l;
+  const w = TOWER_W;
+  const h = towerH(l);
   switch (l.form) {
     case "twin":
       return [
         { p: [-w * 0.42, 0, 0], s: [w * 0.62, h, w * 0.62] },
-        { p: [w * 0.42, 0, 0.15], s: [w * 0.62, h * 0.88, w * 0.62] },
-        { p: [0, h * 0.5, 0.05], s: [w * 0.3, 0.35, w * 0.4] },
-        { p: [0, 0, 0], s: [w * 1.9, 0.7, w * 1.2] },
+        { p: [w * 0.42, 0, 0.05], s: [w * 0.62, h * 0.88, w * 0.62] },
+        { p: [0, h * 0.5, 0.02], s: [w * 0.3, h * 0.025, w * 0.4] },
+        { p: [0, 0, 0], s: [w * 1.9, h * 0.05, w * 1.2] },
       ];
     case "stepped":
       return [
         { p: [0, 0, 0], s: [w, h * 0.62, w] },
         { p: [0, h * 0.62, 0], s: [w * 0.8, h * 0.24, w * 0.8] },
         { p: [0, h * 0.86, 0], s: [w * 0.56, h * 0.14, w * 0.56] },
-        { p: [0, 0, 0], s: [w * 1.7, 0.6, w * 1.7] },
+        { p: [0, 0, 0], s: [w * 1.7, h * 0.045, w * 1.7] },
       ];
     case "cluster":
       return [
         { p: [0, 0, -w * 0.45], s: [w * 0.6, h, w * 0.6] },
         { p: [-w * 0.6, 0, w * 0.4], s: [w * 0.6, h * 0.82, w * 0.6] },
         { p: [w * 0.62, 0, w * 0.35], s: [w * 0.6, h * 0.7, w * 0.6] },
-        { p: [0, 0, 0], s: [w * 2.2, 0.55, w * 1.9] },
+        { p: [0, 0, 0], s: [w * 2.2, h * 0.04, w * 1.9] },
       ];
     default:
       return [
         { p: [0, 0, 0], s: [w * 1.45, h, w * 0.66] },
-        { p: [0, h, 0], s: [w * 1.1, 0.5, w * 0.5] },
-        { p: [0, 0, 0], s: [w * 2, 0.6, w * 1.2] },
+        { p: [0, h, 0], s: [w * 1.1, h * 0.03, w * 0.5] },
+        { p: [0, 0, 0], s: [w * 2, h * 0.045, w * 1.2] },
       ];
   }
 }
@@ -255,7 +212,7 @@ function Tower({ l, index }: { l: Landmark; index: number }) {
   const anchor = useMemo(() => new THREE.Vector3(), []);
   const [x, z] = geo(l.lat, l.lon);
   const parts = useMemo(() => towerParts(l), [l]);
-  const mat = useMemo(() => makeBuildingMaterial({ instanced: false, color: "#fbfaf7", seed: index * 0.13 + 0.2 }), [index]);
+  const mat = useMemo(() => makeBuildingMaterial({ mode: "single", color: "#ffffff", seed: index * 0.13 + 0.2 }), [index]);
   const top = Math.max(...parts.map((p) => p.p[1] + p.s[1]));
   const beamUniforms = useMemo(() => ({ uColor: { value: new THREE.Color("#ffb46a") }, uAmt: { value: 0 } }), []);
 
@@ -281,7 +238,7 @@ function Tower({ l, index }: { l: Landmark; index: number }) {
       label.style.opacity = String(o);
       if (o > 0.001) {
         // project the tower top to the screen; the label lives in the DOM overlay
-        anchor.set(x + parts[0].p[0], top * (group.current?.scale.y ?? 1) + 0.6, z + parts[0].p[2]).project(state.camera);
+        anchor.set(x + parts[0].p[0], top * (group.current?.scale.y ?? 1) + 0.2, z + parts[0].p[2]).project(state.camera);
         const sx = (anchor.x * 0.5 + 0.5) * state.size.width;
         const sy = (-anchor.y * 0.5 + 0.5) * state.size.height;
         label.style.transform = `translate3d(${sx.toFixed(1)}px, ${sy.toFixed(1)}px, 0) translate(-50%, -100%)`;
@@ -296,12 +253,12 @@ function Tower({ l, index }: { l: Landmark; index: number }) {
         {parts.map((pt, i) => (
           <mesh key={i} geometry={unitBox} material={mat} position={pt.p} scale={pt.s} castShadow receiveShadow />
         ))}
-        <mesh position={[parts[0].p[0], top + 0.02, parts[0].p[2]]} scale={[0.3, 0.12, 0.3]} geometry={unitBox}>
+        <mesh position={[parts[0].p[0], top + 0.01, parts[0].p[2]]} scale={[0.1, 0.045, 0.1]} geometry={unitBox}>
           <meshBasicMaterial ref={crown} toneMapped={false} color="#ffb46a" />
         </mesh>
       </group>
-      <mesh position={[parts[0].p[0], top + 20, parts[0].p[2]]}>
-        <cylinderGeometry args={[0.05, 0.16, 40, 12, 1, true]} />
+      <mesh position={[parts[0].p[0], top + 15, parts[0].p[2]]}>
+        <cylinderGeometry args={[0.01, 0.032, 30, 12, 1, true]} />
         <shaderMaterial
           ref={beam}
           vertexShader={BEAM_VERT}
@@ -313,8 +270,8 @@ function Tower({ l, index }: { l: Landmark; index: number }) {
           toneMapped={false}
         />
       </mesh>
-      <mesh ref={ring} rotation-x={-Math.PI / 2} position={[0, 0.04, 0]}>
-        <ringGeometry args={[1.6, 1.7, 64]} />
+      <mesh ref={ring} rotation-x={-Math.PI / 2} position={[0, 0.02, 0]}>
+        <ringGeometry args={[0.42, 0.45, 64]} />
         <meshBasicMaterial color="#ffb46a" transparent opacity={0} depthWrite={false} toneMapped={false} />
       </mesh>
     </group>
@@ -329,8 +286,8 @@ function World({ mobile }: { mobile: boolean }) {
   const hemi = useRef<THREE.HemisphereLight>(null);
   const sky = useRef<THREE.ShaderMaterial>(null);
   const ground = useMemo(() => makeGroundMaterial(), []);
-  const look = useRef(new THREE.Vector3(-17, 1, 4));
-  const camPos = useRef(new THREE.Vector3(-46, 33, 60));
+  const look = useRef(new THREE.Vector3(-8, 0, 12));
+  const camPos = useRef(new THREE.Vector3(-24, 13, 52));
   const p = useRef(0);
   const tmp = useMemo(
     () => ({
@@ -360,11 +317,31 @@ function World({ mobile }: { mobile: boolean }) {
   );
 
   useEffect(() => {
-    scene.fog = new THREE.Fog("#efece6", 50, 175);
+    scene.fog = new THREE.Fog("#efece6", 28, 125);
     return () => {
       scene.fog = null;
     };
   }, [scene]);
+
+  // real coastline, roads and parks (baked from OpenStreetMap)
+  useEffect(() => {
+    let tex: THREE.Texture | null = null;
+    new THREE.TextureLoader().load("/data/mumbai-ground.png", (t) => {
+      t.flipY = false;
+      t.colorSpace = THREE.NoColorSpace;
+      t.anisotropy = 8;
+      t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+      t.needsUpdate = true;
+      tex = t;
+      cityUniforms.uGround.value = t;
+      arrived.ground = performance.now();
+    });
+    return () => {
+      tex?.dispose();
+      cityUniforms.uGround.value = null;
+      cityUniforms.uGroundOn.value = 0;
+    };
+  }, []);
 
   useFrame((state, dt) => {
     const k = 1 - Math.exp(-dt * 3.2);
@@ -389,7 +366,11 @@ function World({ mobile }: { mobile: boolean }) {
 
     cityUniforms.uNight.value = smoothstep(0.38, 0.78, pp);
     cityUniforms.uSea.value.copy(tmp.sea);
-    cityUniforms.uRise.value = skyline.rise;
+    // the city rises with the intro, but never before its data has arrived
+    const now = performance.now();
+    const since = arrived.city < 0 ? 0 : clamp((now - arrived.city) / 2600);
+    cityUniforms.uRise.value = Math.min(skyline.rise, 1 - Math.pow(1 - since, 2));
+    cityUniforms.uGroundOn.value = arrived.ground < 0 ? 0 : clamp((now - arrived.ground) / 700);
 
     if (sky.current) {
       const u = sky.current.uniforms;
@@ -404,7 +385,10 @@ function World({ mobile }: { mobile: boolean }) {
     if (sun.current) {
       sun.current.color.copy(tmp.sun);
       sun.current.intensity = sunI;
-      sun.current.position.set(8, 0, -10).addScaledVector(tmp.dir, 90);
+      // the shadow frustum follows what the camera looks at, so the small real buildings get crisp shadows
+      sun.current.target.position.copy(look.current);
+      sun.current.target.updateMatrixWorld();
+      sun.current.position.copy(look.current).addScaledVector(tmp.dir, 60);
     }
     if (hemi.current) {
       hemi.current.color.copy(tmp.hs);
@@ -424,7 +408,7 @@ function World({ mobile }: { mobile: boolean }) {
     camera.lookAt(look.current);
     if (mobile && camera instanceof THREE.PerspectiveCamera) {
       // portrait screens: pull back so the city still reads
-      camera.position.addScaledVector(camera.getWorldDirection(tmp.dir).negate(), 14);
+      camera.position.addScaledVector(camera.getWorldDirection(tmp.dir).negate(), 9);
     }
   });
 
@@ -441,22 +425,22 @@ function World({ mobile }: { mobile: boolean }) {
         position={[50, 70, 40]}
         intensity={2.4}
         shadow-mapSize={mobile ? [1024, 1024] : [2048, 2048]}
-        shadow-bias={-0.0004}
-        shadow-normalBias={0.04}
+        shadow-bias={-0.0003}
+        shadow-normalBias={0.012}
         shadow-radius={5}
-        shadow-camera-left={-62}
-        shadow-camera-right={62}
-        shadow-camera-top={62}
-        shadow-camera-bottom={-62}
+        shadow-camera-left={-26}
+        shadow-camera-right={26}
+        shadow-camera-top={26}
+        shadow-camera-bottom={-26}
         shadow-camera-near={1}
-        shadow-camera-far={220}
+        shadow-camera-far={140}
       >
-        <object3D attach="target" position={[8, 0, -10]} />
+        <object3D attach="target" position={[-8, 0, 12]} />
       </directionalLight>
       <mesh rotation-x={-Math.PI / 2} position={[8, 0, -10]} material={ground} receiveShadow>
         <planeGeometry args={[420, 420, 1, 1]} />
       </mesh>
-      <City mobile={mobile} />
+      <RealCity mobile={mobile} />
       {LANDMARKS.map((l, i) => (
         <Tower key={l.slug} l={l} index={i} />
       ))}
@@ -471,7 +455,7 @@ export default function SkylineScene({ active }: { active: boolean }) {
       shadows="percentage"
       frameloop={active ? "always" : "never"}
       dpr={mobile ? [1, 1.5] : [1, 1.75]}
-      camera={{ fov: mobile ? 50 : 32, near: 0.5, far: 420, position: [-46, 33, 60] }}
+      camera={{ fov: mobile ? 50 : 32, near: 0.2, far: 420, position: [-24, 13, 52] }}
       gl={{ antialias: true, powerPreference: "high-performance" }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.NeutralToneMapping;

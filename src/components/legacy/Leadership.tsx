@@ -10,7 +10,7 @@ export function Leadership() {
       <TwoGenerations />
       <FamilyTree />
 
-      <section className="bg-stone px-6 py-28 md:px-10 md:py-36">
+      <section id="team" className="scroll-mt-24 bg-stone px-6 py-28 md:px-10 md:py-36">
         <div className="mb-14 flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <h2 className="display text-[12vw] md:text-[min(5.4vw,6.5rem)]" data-split>
             Board &amp; <span className="accent normal-case">management</span>

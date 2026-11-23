@@ -21,7 +21,7 @@ export function Awards() {
   }, [all, year]);
 
   return (
-    <section data-tone="dark" className="relative overflow-hidden bg-night py-28 text-stone md:py-40">
+    <section id="awards" data-tone="dark" className="relative scroll-mt-24 overflow-hidden bg-night py-28 text-stone md:py-40">
       <div className="overflow-hidden border-y border-stone/10 py-5" aria-hidden>
         <div className="marquee flex w-max gap-12 whitespace-nowrap">
           {[...marquee, ...marquee].map((a, i) => (

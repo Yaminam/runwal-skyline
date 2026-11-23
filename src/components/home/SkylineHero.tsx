@@ -168,7 +168,7 @@ export function SkylineHero() {
               className="absolute left-0 top-0 whitespace-nowrap opacity-0 will-change-transform"
             >
               <div className="flex flex-col items-center gap-1.5">
-                <span className="border border-white/25 bg-graphite/75 px-3 py-1.5 text-[11px] font-medium tracking-wide text-white backdrop-blur-md">{l.name}</span>
+                <span className="border border-white/25 bg-graphite/90 px-3 py-1.5 text-[11px] font-medium tracking-wide text-white">{l.name}</span>
                 <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-white [text-shadow:0_1px_8px_rgba(0,0,0,.6)]">{l.area}</span>
                 <span className="h-7 w-px bg-gradient-to-b from-amber to-transparent" />
               </div>
@@ -247,6 +247,9 @@ export function SkylineHero() {
               </TLink>
             </div>
           </div>
+
+          {/* data credit for the real buildings, coastline and roads */}
+          <p className="kicker absolute right-6 top-[10.25rem] hidden text-right text-[0.58rem]! opacity-45 md:right-10 md:top-[11.5rem] md:block">Buildings &amp; map data &copy; OpenStreetMap contributors</p>
 
           {/* HUD */}
           <div className="absolute right-6 top-24 hidden flex-col items-end gap-1 text-right md:right-10 md:top-28 md:flex" data-intro-fade>
