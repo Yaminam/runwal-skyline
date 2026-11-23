@@ -7,6 +7,7 @@ import { CONTACT, ENQUIRY_PROJECTS, RERA_NOTE, SOCIALS } from "@/lib/company";
 import { prefersReducedMotion } from "@/lib/motion";
 import { SECTIONS, type NavLink } from "@/lib/site-sections";
 import { getLenis } from "../SmoothScroll";
+import { MobileLift } from "./MobileLift";
 import { NightSkyline } from "./NightSkyline";
 import { TLink } from "./Transition";
 
@@ -158,14 +159,13 @@ export function Footer() {
 
           {/* the street, in front of the real city */}
           <div className="relative mt-14 md:mt-20">
-            <div ref={city} className="pointer-events-none absolute inset-x-0 bottom-0 opacity-80 md:inset-x-[-2rem] [&_p]:hidden" aria-hidden>
+            <div ref={city} className="pointer-events-none absolute inset-x-0 bottom-0 hidden opacity-80 md:block md:inset-x-[-2rem] [&_p]:hidden" aria-hidden>
               <NightSkyline towers={SKYLINE_TOWERS} />
             </div>
 
-            <p className="kicker relative mb-4 px-6 text-stone/40 md:hidden">Swipe the street &rarr;</p>
-            <div className="st-street no-scrollbar relative flex snap-x snap-mandatory items-end gap-3 overflow-x-auto px-6 md:grid md:grid-cols-6 md:gap-4 md:overflow-visible md:px-10">
+                        <div className="st-street relative hidden grid-cols-6 items-end gap-4 px-10 md:grid">
               {STREET.map((t) => (
-                <nav key={t.id} aria-label={t.title} className="st-tower group/t relative w-[64vw] shrink-0 snap-center md:w-auto">
+                <nav key={t.id} aria-label={t.title} className="st-tower group/t relative">
                   {/* crown */}
                   <div className="mx-auto flex w-[56%] flex-col items-center">
                     <span className={`block h-6 w-px transition-colors duration-500 ${t.tall ? "bg-amber" : "bg-stone/25 group-hover/t:bg-amber"}`} />
@@ -211,8 +211,14 @@ export function Footer() {
               ))}
             </div>
 
+            {/* phones: the lift panel instead of the street */}
+            <div className="relative md:hidden">
+              <MobileLift onTop={ride} />
+              <NightSkyline towers={SKYLINE_TOWERS} />
+            </div>
+
             {/* ground line */}
-            <div className="relative border-t border-amber/30 bg-night px-6 py-6 md:px-10">
+            <div className="relative hidden border-t border-amber/30 bg-night px-6 py-6 md:block md:px-10">
               <div className="flex flex-wrap items-center justify-between gap-5">
                 <div className="flex flex-wrap gap-x-5 gap-y-2">
                   {SOCIALS.map((s) => (

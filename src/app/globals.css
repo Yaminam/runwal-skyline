@@ -43,9 +43,11 @@ html {
   color-scheme: light;
 }
 
+/* tablets, laptops, short windows and big monitors: same layout scaled as one,
+   never smaller than a readable base */
 @media (min-width: 768px) {
   html {
-    font-size: clamp(11px, min(100vw / 90, 100vh / 56.25), 48px);
+    font-size: clamp(13.5px, min(100vw / 90, 100vh / 56.25), 48px);
   }
 }
 

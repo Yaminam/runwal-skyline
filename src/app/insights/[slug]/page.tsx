@@ -100,7 +100,7 @@ function Body({ blocks }: { blocks: Block[] }) {
             );
           case "img":
             return (
-              <figure key={i} className="my-12 md:-mx-[8%]">
+              <figure key={i} className="my-12 lg:-mx-[8%]">
                 <div className="relative overflow-hidden bg-stone-2" data-reveal-img>
                   <Pic src={b.src} alt={b.alt} sizes="(min-width: 1024px) 60vw, 100vw" />
                 </div>
