@@ -60,6 +60,11 @@ export function NightSkyline({ towers }: { towers: Tower[] }) {
       const r = rng(1978);
       W = host.clientWidth;
       H = host.clientHeight;
+      // hidden at this breakpoint (display: none): nothing to draw until it has a size
+      if (!W || !H) {
+        base = null;
+        return;
+      }
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       cv.width = Math.round(W * dpr);
       cv.height = Math.round(H * dpr);
@@ -131,7 +136,7 @@ export function NightSkyline({ towers }: { towers: Tower[] }) {
     };
 
     const draw = () => {
-      if (!base) return;
+      if (!base || !base.width || !base.height) return;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, cv.width, cv.height);
       ctx.drawImage(base, 0, 0);
