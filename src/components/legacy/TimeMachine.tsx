@@ -552,6 +552,7 @@ export function TimeMachine() {
   return (
     <section
       ref={root}
+      id="journey"
       className="relative z-10 bg-paper"
       style={{ height: reduced ? "auto" : `${100 + (N - 1) * 80}svh` }}
       aria-label="The architect's tape: Runwal milestones"

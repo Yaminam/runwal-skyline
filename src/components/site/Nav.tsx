@@ -3,6 +3,7 @@
 import gsap from "gsap";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { SECTIONS } from "@/lib/site-sections";
 import { getLenis } from "../SmoothScroll";
 import { RunwalMark, RunwalWords } from "./BrandLogo";
 import { TLink } from "./Transition";
@@ -65,9 +66,21 @@ export function Nav() {
     };
   }, [pathname]);
 
-  useEffect(() => {
+  // close the menu whenever the route changes (adjusting state during render, not in an effect)
+  const [menuPath, setMenuPath] = useState(pathname);
+  if (menuPath !== pathname) {
+    setMenuPath(pathname);
     setOpen(false);
-  }, [pathname]);
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   useEffect(() => {
     const l = getLenis();
@@ -115,32 +128,68 @@ export function Nav() {
             <button
               type="button"
               onClick={() => setOpen((o) => !o)}
-              className="relative flex size-11 items-center justify-center md:hidden"
+              className="flex h-11 items-center gap-3 md:pl-2"
               aria-label={open ? "Close menu" : "Open menu"}
               aria-expanded={open}
             >
-              <span className={`absolute h-px w-6 bg-current transition-transform duration-500 ${open ? "rotate-45" : "-translate-y-1"}`} />
-              <span className={`absolute h-px w-6 bg-current transition-transform duration-500 ${open ? "-rotate-45" : "translate-y-1"}`} />
+              <span className="hidden text-[0.95rem] font-medium md:inline">{open ? "Close" : "Menu"}</span>
+              <span className="relative flex size-11 items-center justify-center">
+                <span className={`absolute h-px w-6 bg-current transition-transform duration-500 ${open ? "rotate-45" : "-translate-y-1"}`} />
+                <span className={`absolute h-px w-6 bg-current transition-transform duration-500 ${open ? "-rotate-45" : "translate-y-1"}`} />
+              </span>
             </button>
           </div>
         </div>
       </header>
 
       {open && (
-        <div className="fixed inset-0 z-[45] flex flex-col justify-between bg-graphite px-6 pb-10 pt-28 text-stone md:hidden">
-          <nav className="flex flex-col gap-2" aria-label="Mobile">
-            {LINKS.map((l) => (
-              <span key={l.href} className="overflow-hidden">
-                <TLink href={l.href} className="mn-item flex items-baseline gap-4 py-1">
-                  <span className="kicker text-amber">{l.n}</span>
-                  <span className="display text-5xl">{l.label}</span>
-                </TLink>
-              </span>
-            ))}
-          </nav>
-          <div className="mn-fade flex flex-col gap-2 text-sm text-stone/70">
-            <a href="tel:02262328585">Sales 022 6232 8585</a>
-            <a href="mailto:corporate@runwal.com">corporate@runwal.com</a>
+        <div
+          data-nav-skip
+          data-lenis-prevent
+          className="fixed inset-0 z-[45] overflow-y-auto bg-graphite text-stone"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Site menu"
+          onClickCapture={(e) => {
+            if ((e.target as HTMLElement).closest("a")) setOpen(false);
+          }}
+        >
+          <div className="blueprint-dark pointer-events-none absolute inset-0 opacity-50" aria-hidden />
+          <div className="relative grid min-h-full gap-12 px-6 pb-10 pt-28 md:grid-cols-12 md:gap-10 md:px-10 md:pt-36">
+            <nav className="flex flex-col gap-1 md:col-span-5" aria-label="Main">
+              {LINKS.map((l) => (
+                <span key={l.href} className="overflow-hidden">
+                  <TLink href={l.href} className="mn-item group flex items-baseline gap-4 py-1">
+                    <span className="kicker text-amber">{l.n}</span>
+                    <span className="display text-5xl transition-transform duration-700 ease-[var(--ease-out-expo)] group-hover:translate-x-3 md:text-[min(5.4vw,6.4rem)]">{l.label}</span>
+                  </TLink>
+                </span>
+              ))}
+              <div className="mn-fade mt-10 flex flex-col gap-2 text-sm text-stone/70">
+                <a href="tel:02262328585" className="ulink self-start">
+                  Sales 022 6232 8585
+                </a>
+                <a href="mailto:corporate@runwal.com" className="ulink self-start">
+                  corporate@runwal.com
+                </a>
+              </div>
+            </nav>
+            <div className="mn-fade grid grid-cols-2 gap-x-6 gap-y-10 self-end md:col-span-6 md:col-start-7 md:grid-cols-3">
+              {SECTIONS.map((g) => (
+                <div key={g.id}>
+                  <p className="kicker text-stone/40">{g.title}</p>
+                  <ul className="mt-4 flex flex-col gap-2.5">
+                    {g.links.map((l) => (
+                      <li key={l.label}>
+                        <TLink href={l.href} className="ulink text-[0.98rem] text-stone/85 hover:text-stone">
+                          {l.label}
+                        </TLink>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
