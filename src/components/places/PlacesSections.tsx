@@ -183,10 +183,10 @@ export function Hospitality() {
         <ol className="md:col-span-6 md:col-start-7">
           {HOSPITALITY.places.map((p, i) => (
             <li key={p.name} className="group relative border-b border-graphite/15 first:border-t" data-fade>
-              <div className="relative z-10 flex items-baseline gap-6 py-7 transition-transform duration-700 ease-[var(--ease-out-expo)] group-hover:translate-x-3">
-                <span className="kicker w-8 text-mute">0{i + 1}</span>
-                <span className="display flex-1 text-5xl md:text-7xl">{p.name}</span>
-                <span className="kicker text-mute">{p.note}</span>
+              <div className="relative z-10 grid grid-cols-[2rem_1fr] items-baseline gap-x-4 gap-y-1 py-6 transition-transform duration-700 ease-[var(--ease-out-expo)] group-hover:translate-x-3 md:grid-cols-[2rem_1fr_auto] md:gap-x-6 md:py-7">
+                <span className="kicker text-mute">0{i + 1}</span>
+                <span className="display min-w-0 text-[11vw] md:text-7xl">{p.name}</span>
+                <span className="kicker col-start-2 text-mute md:col-start-3">{p.note}</span>
               </div>
               <span className="dusk-line absolute bottom-[-1px] left-0 h-px w-full origin-left scale-x-0 transition-transform duration-700 ease-[var(--ease-out-expo)] group-hover:scale-x-100" />
             </li>

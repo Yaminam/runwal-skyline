@@ -157,7 +157,7 @@ export function ResidencesBrowser() {
       />
 
       {/* filters */}
-      <div className="sticky top-0 z-30 -mx-6 border-y border-graphite/10 bg-stone/85 px-6 py-5 backdrop-blur-xl md:-mx-10 md:px-10">
+      <div className="relative z-30 -mx-6 border-y md:sticky md:top-0 border-graphite/10 bg-stone/85 px-6 py-5 backdrop-blur-xl md:-mx-10 md:px-10">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="flex min-w-0 flex-col gap-5 md:flex-row md:gap-8">
             <Segmented

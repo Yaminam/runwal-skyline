@@ -94,9 +94,9 @@ export function Signature() {
                   <h3 className="title text-3xl md:text-[2.6rem]">{p.name}</h3>
                 </div>
               </div>
-              <div className="flex items-start justify-between gap-6 border-b border-graphite/15 py-5">
+              <div className="flex flex-col gap-2 border-b border-graphite/15 py-5 md:flex-row md:items-start md:justify-between md:gap-6">
                 <p className="max-w-sm text-sm leading-relaxed text-graphite-2">{p.tagline}</p>
-                <p className="kicker shrink-0 text-right text-mute">
+                <p className="kicker shrink-0 text-mute md:text-right">
                   {p.configs
                     .map((c) => c.label)
                     .slice(0, 3)

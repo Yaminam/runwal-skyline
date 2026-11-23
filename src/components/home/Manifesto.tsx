@@ -62,7 +62,7 @@ export function Manifesto() {
 
   return (
     <section ref={root} className="relative bg-stone px-6 pb-28 pt-32 md:px-10 md:pb-40 md:pt-48">
-      <div className="mb-14 flex items-center justify-between border-b border-graphite/15 pb-5">
+      <div className="mb-14 flex flex-col gap-2 border-b border-graphite/15 pb-5 md:flex-row md:items-center md:justify-between">
         <p className="kicker">The Runwal record</p>
         <p className="kicker text-mute">Est. 1978 &middot; Sion, Mumbai</p>
       </div>

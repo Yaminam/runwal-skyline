@@ -111,7 +111,7 @@ export function Footer() {
       <div className="blueprint-dark pointer-events-none absolute inset-0 opacity-40" aria-hidden />
 
       {!compact && (
-        <div className="relative grid gap-12 px-6 pt-24 md:grid-cols-12 md:gap-10 md:px-10 md:pt-32">
+        <div className="relative grid gap-12 px-6 pt-16 md:grid-cols-12 md:gap-10 md:px-10 md:pt-32">
           {/* lift panel */}
           <div className="md:col-span-4">
             <div className="flex items-center gap-3">
@@ -119,7 +119,7 @@ export function Footer() {
               <p className="kicker text-stone/50">The Lobby &middot; Runwal</p>
             </div>
 
-            <div className="mt-10 border border-stone/15 bg-black/30 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <div className="mt-6 border border-stone/15 bg-black/30 p-5 md:mt-10 md:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
               <div className="flex items-center justify-between">
                 <p className="kicker text-stone/40">Now at floor</p>
                 <span
@@ -134,7 +134,7 @@ export function Footer() {
               <span
                 ref={display}
                 aria-live="off"
-                className="mt-3 block font-mono text-[5.5rem] leading-none tracking-tight text-amber tabular-nums [text-shadow:0_0_10px_rgba(242,166,90,.55)] md:text-[6.5rem]"
+                className="mt-2 block font-mono text-[4rem] leading-none tracking-tight text-amber tabular-nums [text-shadow:0_0_10px_rgba(242,166,90,.55)] md:text-[6.5rem]"
               >
                 G
               </span>
@@ -214,13 +214,15 @@ export function Footer() {
 
               <div>
                 <p className="kicker pb-3 pt-6 text-stone/40">Residences &middot; floors 01&ndash;{String(HOMES.length).padStart(2, "0")}</p>
-                {HOME_FLOORS.map((f) => (
-                  <TLink key={f.slug} href={`/residences/${f.slug}`} className={row} onMouseEnter={() => travel(f.level)} onFocus={() => travel(f.level)}>
-                    <span className={floorCls}>{f.code}</span>
-                    <span className="text-[0.95rem] text-stone/85 transition-transform duration-500 ease-[var(--ease-out-expo)] group-hover:translate-x-1.5 group-hover:text-stone">{f.name.replace("Runwal ", "")}</span>
-                    <span className="kicker text-stone/35">{f.area}</span>
-                  </TLink>
-                ))}
+                <div className="grid grid-cols-2 gap-x-5 md:block">
+                  {HOME_FLOORS.map((f) => (
+                    <TLink key={f.slug} href={`/residences/${f.slug}`} className={row} onMouseEnter={() => travel(f.level)} onFocus={() => travel(f.level)}>
+                      <span className={floorCls}>{f.code}</span>
+                      <span className="truncate text-[0.95rem] text-stone/85 transition-transform duration-500 ease-[var(--ease-out-expo)] group-hover:translate-x-1.5 group-hover:text-stone">{f.name.replace("Runwal ", "").replace("The Central Park", "Central Park")}</span>
+                      <span className="kicker hidden text-stone/35 md:inline">{f.area}</span>
+                    </TLink>
+                  ))}
+                </div>
                 <div className={`${row} border-b`}>
                   <span className="kicker text-amber">G</span>
                   <span className="text-[0.95rem] text-stone/85">Lobby &middot; Sion (East)</span>
