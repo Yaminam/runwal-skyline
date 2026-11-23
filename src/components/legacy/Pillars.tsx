@@ -29,8 +29,13 @@ export function Pillars() {
           <p className="kicker" data-fade>
             Our philosophy
           </p>
-          <h2 className="display mt-6 text-[12vw] md:text-[min(5.4vw,6.5rem)]" data-split>
-            Building for <span className="accent normal-case">generations</span> to come
+          {/* always three lines: sized so the widest line ("Building for") fits the column */}
+          <h2 className="display mt-6 whitespace-nowrap text-[9.4vw] md:text-[min(3.9vw,4.9rem)]" data-split>
+            Building for
+            <br />
+            <span className="accent normal-case">generations</span>
+            <br />
+            to come
           </h2>
           <p className="mt-10 max-w-md text-[1.02rem] leading-relaxed text-graphite-2" data-fade>
             {PHILOSOPHY[0]}

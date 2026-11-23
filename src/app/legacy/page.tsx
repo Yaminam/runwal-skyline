@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { Awards } from "@/components/legacy/Awards";
+import { FortyEight } from "@/components/legacy/FortyEight";
 import { Leadership } from "@/components/legacy/Leadership";
 import { LegacyHero } from "@/components/legacy/LegacyHero";
 import { Numbers } from "@/components/legacy/Numbers";
 import { Pillars } from "@/components/legacy/Pillars";
 import { Reel } from "@/components/legacy/Reel";
-import { Timeline } from "@/components/legacy/Timeline";
+import { TimeMachine } from "@/components/legacy/TimeMachine";
 import { PageFx } from "@/components/site/PageFx";
 
 export const metadata: Metadata = {
@@ -20,8 +21,9 @@ export default function LegacyPage() {
     <>
       <PageFx />
       <LegacyHero />
+      <FortyEight />
+      <TimeMachine />
       <Numbers />
-      <Timeline />
       <Pillars />
       <Leadership />
       <Reel />

@@ -35,10 +35,18 @@
 
 html {
   background: var(--color-stone);
-  /* Above 1920px wide the layout scales up as one (rem-based) instead of floating in empty space. */
-  font-size: max(16px, min(100vw / 120, 100vh / 67.5));
+  /* Phones keep a fixed 16px base. From tablet up, the whole rem-based layout scales as one unit
+     from a 1440x900 design (16px), limited by height too, so a 13" laptop and a 32" monitor show
+     the same composition, just smaller or larger. */
+  font-size: 16px;
   color: var(--color-graphite);
   color-scheme: light;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: clamp(11px, min(100vw / 90, 100vh / 56.25), 48px);
+  }
 }
 
 body {

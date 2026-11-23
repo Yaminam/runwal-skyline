@@ -61,8 +61,8 @@ export function Awards() {
         <div className="md:col-span-7 md:col-start-6">
         <ul>
           {list.map((a) => (
-            <li key={`${a.year}-${a.award}-${a.project}`} className="group grid grid-cols-[4.5rem_1fr] gap-4 border-b border-stone/10 py-5 transition-colors hover:border-amber/50 md:grid-cols-[5rem_1fr_14rem]">
-              <span className="kicker pt-1 text-stone/45">{a.year}</span>
+            <li key={`${a.year}-${a.award}-${a.project}`} className="group grid grid-cols-[5.75rem_1fr] gap-4 border-b border-stone/10 py-5 transition-colors hover:border-amber/50 md:grid-cols-[6.5rem_1fr_14rem]">
+              <span className="kicker whitespace-nowrap pt-1 text-stone/45">{a.year}</span>
               <span>
                 <span className="block text-[1.05rem] leading-snug transition-colors group-hover:text-amber">{a.award}</span>
                 {a.event && <span className="mt-1 block text-sm text-stone/45">{a.event}</span>}

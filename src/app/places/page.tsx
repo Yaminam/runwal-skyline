@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { District } from "@/components/places/District";
 import { Commercial, DrawingBoard, Hospitality, Investors, PlacesHero, Retail } from "@/components/places/PlacesSections";
 import { PageFx } from "@/components/site/PageFx";
 
@@ -14,6 +15,7 @@ export default function PlacesPage() {
     <>
       <PageFx />
       <PlacesHero />
+      <District />
       <Commercial />
       <Retail />
       <Hospitality />

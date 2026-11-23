@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { EnquiryFlow, EnquiryShell } from "@/components/enquire/EnquiryFlow";
+import { ALL_PROJECTS } from "@/lib/projects";
+
+// storeys per residence, for the model that assembles as you book
+const FLOORS = Object.fromEntries(ALL_PROJECTS.map((p) => [p.slug, p.floors]));
 
 export const metadata: Metadata = {
   title: "Book a site visit",
@@ -11,7 +15,7 @@ export const metadata: Metadata = {
 export default function EnquirePage() {
   return (
     <Suspense fallback={<EnquiryShell />}>
-      <EnquiryFlow />
+      <EnquiryFlow floors={FLOORS} />
     </Suspense>
   );
 }

@@ -47,7 +47,7 @@ export default function ResidencesPage() {
         </div>
       </section>
 
-      <section className="px-6 pb-32 md:px-10" aria-label="All residences">
+      <section className="px-6 pb-32 pt-6 md:px-10" aria-label="All residences">
         <ResidencesBrowser />
       </section>
 

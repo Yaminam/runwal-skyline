@@ -55,8 +55,11 @@ export function Nav() {
       if (!raf) raf = requestAnimationFrame(check);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
+    // sections can change tone without scrolling (time-of-day scrubbers), so re-probe gently
+    const poll = setInterval(onScroll, 400);
     check();
     return () => {
+      clearInterval(poll);
       window.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(raf);
     };
@@ -85,27 +88,27 @@ export function Nav() {
           solid && !open ? "border-b border-graphite/10 bg-stone/80 backdrop-blur-xl" : "border-b border-transparent"
         }`}
       >
-        <div className="flex h-16 items-center justify-between px-6 md:h-20 md:px-10">
+        <div className="flex h-20 items-center justify-between px-6 md:h-24 md:px-10">
           <TLink href="/" className="flex items-center gap-3" aria-label="Runwal Realty home">
-            <RunwalMark className="h-11 w-auto shrink-0" />
-            <RunwalWords className="h-[1.5rem] w-auto shrink-0" />
+            <RunwalMark className="h-14 w-auto shrink-0" />
+            <RunwalWords className="h-[1.95rem] w-auto shrink-0" />
           </TLink>
 
-          <nav className="hidden items-center gap-9 md:flex" aria-label="Primary">
+          <nav className="hidden items-center gap-11 md:flex" aria-label="Primary">
             {LINKS.slice(0, 3).map((l) => (
-              <TLink key={l.href} href={l.href} className={`ulink text-[0.82rem] font-medium tracking-wide ${pathname.startsWith(l.href) ? "opacity-100" : "opacity-75 hover:opacity-100"}`}>
+              <TLink key={l.href} href={l.href} className={`ulink text-[0.98rem] font-medium tracking-wide ${pathname.startsWith(l.href) ? "opacity-100" : "opacity-75 hover:opacity-100"}`}>
                 {l.label}
               </TLink>
             ))}
           </nav>
 
           <div className="flex items-center gap-3">
-            <a href="tel:02262328585" className="kicker hidden opacity-75 transition-opacity hover:opacity-100 lg:block">
+            <a href="tel:02262328585" className="kicker hidden text-[0.84rem]! opacity-75 transition-opacity hover:opacity-100 lg:block">
               022 6232 8585
             </a>
             <TLink
               href="/enquire"
-              className={`hidden px-5 py-3 text-[0.8rem] font-medium transition-colors md:inline-flex ${light ? "bg-stone text-graphite hover:bg-amber" : "bg-graphite text-stone hover:bg-dusk"}`}
+              className={`hidden px-7 py-4 text-[0.95rem] font-medium transition-colors md:inline-flex ${light ? "bg-stone text-graphite hover:bg-amber" : "bg-graphite text-stone hover:bg-dusk"}`}
             >
               Book a visit
             </TLink>

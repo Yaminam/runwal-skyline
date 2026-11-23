@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { AnyHour } from "@/components/residences/AnyHour";
 import { ExplorerSection } from "@/components/residences/ExplorerSection";
 import { Gallery } from "@/components/residences/Gallery";
 import { HeroFade } from "@/components/residences/HeroFade";
@@ -156,6 +157,8 @@ export default async function ResidencePage({ params }: PageProps<"/residences/[
           )}
         </div>
       </section>
+
+      <AnyHour slug={p.slug} name={p.name} short={p.short} lines={p.lines} tagline={p.tagline} feature={p.images.feature} hero={p.images.hero} />
 
       <ExplorerSection project={p} />
 

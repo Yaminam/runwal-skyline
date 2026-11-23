@@ -6,9 +6,10 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { prefersReducedMotion } from "@/lib/motion";
 import { bhkLabel } from "@/lib/project-format";
-import { PROJECTS, REGIONS, type Project, type Region } from "@/lib/projects";
+import { COMMERCIAL, PROJECTS, REGIONS, type Project, type Region } from "@/lib/projects";
 import { Pic } from "../site/Pic";
 import { TLink } from "../site/Transition";
+import { MapFinderSection } from "./MapFinderSection";
 
 gsap.registerPlugin(Flip);
 
@@ -84,6 +85,24 @@ export function ResidencesBrowser() {
     [region, beds],
   );
 
+  // what the map shows: residences that pass, plus offices when no bedroom filter is set
+  const match = useMemo(
+    () => [
+      ...shown.map((p) => p.slug),
+      ...(beds === "Any" ? COMMERCIAL.filter((p) => region === "All" || p.region === region).map((p) => p.slug) : []),
+    ],
+    [shown, beds, region],
+  );
+
+  // /residences?region=Thane (from the home page) pre-selects a region
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("region");
+    const r = REGIONS.find((x) => x === q);
+    if (!r) return;
+    const id = requestAnimationFrame(() => setRegion(r));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   const capture = () => {
     if (grid.current) flipState.current = Flip.getState(grid.current.querySelectorAll("[data-card]"));
   };
@@ -126,6 +145,17 @@ export function ResidencesBrowser() {
 
   return (
     <div>
+      <MapFinderSection
+        match={match}
+        region={region}
+        onRegion={(r) => {
+          capture();
+          setRegion(r);
+        }}
+        count={shown.length}
+        total={PROJECTS.length}
+      />
+
       {/* filters */}
       <div className="sticky top-0 z-30 -mx-6 border-y border-graphite/10 bg-stone/85 px-6 py-5 backdrop-blur-xl md:-mx-10 md:px-10">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">

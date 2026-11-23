@@ -1,12 +1,15 @@
 "use client";
 
 import gsap from "gsap";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BUDGETS, CONTACT, ENQUIRY_PROJECTS } from "@/lib/company";
 import { prefersReducedMotion } from "@/lib/motion";
-import { scrollToEl } from "../SmoothScroll";
+import { scrollToEl, scrollToTop } from "../SmoothScroll";
 import { TLink } from "../site/Transition";
+
+const EnquireModel = dynamic(() => import("../three/EnquireModel"), { ssr: false });
 
 type Project = (typeof ENQUIRY_PROJECTS)[number];
 const STEPS = ["Residence", "Home", "Visit", "Details"] as const;
@@ -25,6 +28,33 @@ function nextDays(n: number) {
   }
   return out;
 }
+
+/** Where "your" floors sit in the tower: bigger homes and budgets climb higher. */
+function bandFor(kind: string | undefined, type: string | null, budget: number): [number, number] | null {
+  if (!type) return null;
+  const lift = (budget - 3) * 0.025;
+  const homes: Record<string, [number, number]> = {
+    "1 BHK": [0.14, 0.32],
+    "2 BHK": [0.28, 0.48],
+    "3 BHK": [0.45, 0.66],
+    "4 BHK": [0.62, 0.82],
+    "5 BHK & above": [0.8, 0.97],
+  };
+  const offices: Record<string, [number, number]> = {
+    "Boutique office": [0.2, 0.42],
+    "Full floor": [0.56, 0.62],
+    "Flex office": [0.32, 0.5],
+  };
+  const b = (kind === "office" ? offices : homes)[type];
+  if (!b) return null;
+  return [Math.max(0.05, Math.min(0.9, b[0] + lift)), Math.max(0.12, Math.min(0.99, b[1] + lift))];
+}
+
+const hourOf = (slot: string | null) => {
+  if (!slot) return null;
+  const [h, m] = slot.split(":").map(Number);
+  return h + m / 60;
+};
 
 const fmtDay = (d: Date) => d.toLocaleDateString("en-IN", { weekday: "short" });
 const fmtLong = (d: Date) => d.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
@@ -65,14 +95,15 @@ function Field({ label, type = "text", value, onChange, required, autoComplete, 
   );
 }
 
-export function EnquiryFlow() {
+export function EnquiryFlow({ floors }: { floors: Record<string, number> }) {
   const params = useSearchParams();
   const initial = ENQUIRY_PROJECTS.find((p) => p.slug === params.get("project")) ?? null;
   const [step, setStep] = useState(initial ? 1 : 0);
   const [project, setProject] = useState<Project | null>(initial);
   const [type, setType] = useState<string | null>(null);
   const [budget, setBudget] = useState(3);
-  const [days, setDays] = useState<Date[]>([]);
+  // useSearchParams keeps this flow client-rendered (Suspense shell on the server), so "today" is always the visitor's
+  const [days] = useState<Date[]>(() => nextDays(14));
   const [day, setDay] = useState<number | null>(null);
   const [slot, setSlot] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -85,10 +116,6 @@ export function EnquiryFlow() {
   const doneRef = useRef<HTMLDivElement>(null);
   const top = useRef<HTMLDivElement>(null);
 
-  // dates are computed on the client so the server render never disagrees about "today"
-  useEffect(() => {
-    setDays(nextDays(14));
-  }, []);
 
   useEffect(() => {
     if (!panel.current || prefersReducedMotion()) return;
@@ -96,6 +123,8 @@ export function EnquiryFlow() {
   }, [step]);
 
   useEffect(() => {
+    // the success view is shorter than the form: start it from the top, behind the closed doors
+    if (done) scrollToTop();
     if (!done || !doneRef.current || prefersReducedMotion()) return;
     const el = doneRef.current;
     gsap
@@ -109,6 +138,23 @@ export function EnquiryFlow() {
   }, [done]);
 
   const types = project?.kind === "office" ? OFFICE_TYPES : HOME_TYPES;
+  const nFloors = project ? floors[project.slug] ?? 30 : 30;
+  const band = bandFor(project?.kind, type, budget);
+  const hour = hourOf(slot);
+  const lights = step === 3 ? Math.min(1, name.trim().length / 9) : 0;
+  const caption = !project
+    ? "Choose a residence to raise its tower"
+    : step === 0 || !type
+      ? `${project.name} · ${nFloors} storeys, rising`
+      : step === 1
+        ? `Your floors · ${type} band`
+        : step === 2
+          ? hour
+            ? `Light at your visit · ${slot}`
+            : "Pick a time and watch the light"
+          : name.trim()
+            ? `Lights on for ${name.trim().split(" ")[0]}`
+            : "Type your name to switch the lights on";
   const canNext = [!!project, !!type, day !== null && !!slot, name.trim().length > 1 && phone.replace(/\D/g, "").length >= 10 && consent][step];
 
   const go = (n: number) => {
@@ -128,11 +174,11 @@ export function EnquiryFlow() {
 
   const summary = useMemo(
     () => [
-      ["Residence", project ? `${project.name}` : "—"],
-      ["Location", project?.area ?? "—"],
-      [project?.kind === "office" ? "Office" : "Home", type ?? "—"],
+      ["Residence", project ? project.name : null],
+      ["Location", project?.area ?? null],
+      [project?.kind === "office" ? "Office" : "Home", type],
       ["Budget", BUDGETS[budget]],
-      ["Visit", day !== null && days[day] ? `${fmtLong(days[day])}${slot ? `, ${slot}` : ""}` : "—"],
+      ["Visit", day !== null && days[day] ? `${fmtLong(days[day])}${slot ? `, ${slot}` : ""}` : null],
     ],
     [project, type, budget, day, days, slot],
   );
@@ -141,7 +187,8 @@ export function EnquiryFlow() {
     return (
       <div ref={doneRef} className="relative flex min-h-[78svh] items-center justify-center overflow-hidden bg-graphite text-stone" data-tone="dark">
         <div className="blueprint-dark absolute inset-0" />
-        <div className="relative z-10 flex max-w-2xl flex-col items-center px-6 text-center">
+        <div className="relative z-10 grid w-full max-w-6xl items-center gap-6 px-6 py-16 md:grid-cols-2 md:gap-10">
+        <div className="order-2 flex flex-col items-center text-center md:order-1 md:items-start md:text-left">
           <p className="dn-in kicker text-amber">Visit requested</p>
           <h2 className="dn-in display mt-6 text-[13vw] md:text-[min(7vw,8rem)]">
             See you <span className="accent normal-case">soon,</span>
@@ -151,7 +198,7 @@ export function EnquiryFlow() {
             A Runwal relationship manager will call you on {phone} to confirm your visit to {project?.name}
             {day !== null && days[day] ? ` on ${fmtLong(days[day])} at ${slot}` : ""}.
           </p>
-          <div className="dn-in mt-10 flex flex-wrap justify-center gap-3">
+          <div className="dn-in mt-10 flex flex-wrap justify-center gap-3 md:justify-start">
             {project && (
               <TLink href={`/residences/${project.slug}`} className="bg-amber px-6 py-4 text-sm font-medium text-graphite transition-colors hover:bg-stone">
                 Back to {project.name}
@@ -162,6 +209,11 @@ export function EnquiryFlow() {
             </TLink>
           </div>
           <p className="dn-in kicker mt-10 text-stone/40">Demo: no data was sent</p>
+        </div>
+        <div className="dn-in relative order-1 h-[32svh] md:order-2 md:h-[62svh]">
+          <div className="pointer-events-none absolute inset-[12%] rounded-full bg-amber/20 blur-3xl" aria-hidden />
+          <EnquireModel slug={project?.slug ?? null} floors={nFloors} band={band} hour={hour} lights={1} done />
+        </div>
         </div>
         {/* doors */}
         <div className="dn-door-l absolute inset-y-0 left-0 z-20 w-1/2 border-r border-amber/40 bg-stone" aria-hidden />
@@ -182,13 +234,30 @@ export function EnquiryFlow() {
       <aside className="relative bg-graphite px-6 py-10 text-stone md:sticky md:top-20 md:col-span-4 md:h-[calc(100svh-5rem)] md:px-10 md:pb-10 md:pt-12" data-tone="dark">
         <div className="flex h-full flex-col justify-between gap-10">
           <div>
-            <p className="kicker text-amber">Site visit pass</p>
-            <p className="title mt-4 text-3xl leading-tight md:text-4xl">{project ? project.name : "Choose a residence"}</p>
-            <dl className="mt-8 border-t border-stone/15">
+            <div className="flex items-start justify-between gap-4 md:block">
+              <div>
+                <p className="kicker text-amber">Site visit pass</p>
+                <p className="title mt-4 text-3xl leading-tight md:text-4xl">{project ? project.name : "Choose a residence"}</p>
+              </div>
+              {/* the model of your home, assembling as you answer */}
+              <div className="relative -mr-2 -mt-2 size-36 shrink-0 md:mx-0 md:mt-4 md:h-[30svh] md:min-h-48 md:w-full">
+                <div
+                  className="pointer-events-none absolute inset-x-[10%] bottom-[8%] top-[18%] rounded-full opacity-60 blur-3xl transition-colors duration-1000"
+                  style={{ background: hour === null ? "rgba(138,160,240,0.18)" : hour < 15 ? "rgba(255,240,214,0.16)" : "rgba(255,154,90,0.26)" }}
+                  aria-hidden
+                />
+                <EnquireModel slug={project?.slug ?? null} floors={nFloors} band={step >= 1 ? band : null} hour={step >= 2 ? hour : null} lights={lights} />
+              </div>
+            </div>
+            <p className="kicker mt-3 hidden text-stone/50 md:block" aria-live="polite">
+              <span className="mr-2 inline-block size-1.5 rounded-full bg-amber align-middle" />
+              {caption}
+            </p>
+            <dl className="mt-6 border-t border-stone/15">
               {summary.map(([k, v]) => (
                 <div key={k} className="flex items-baseline justify-between gap-4 border-b border-stone/15 py-3.5">
                   <dt className="kicker text-stone/45">{k}</dt>
-                  <dd className={`text-right text-sm transition-colors ${v === "—" ? "text-stone/30" : "text-stone"}`}>{v}</dd>
+                  <dd className={`text-right text-sm transition-colors ${v === null ? "text-stone/30" : "text-stone"}`}>{v ?? "Not chosen"}</dd>
                 </div>
               ))}
             </dl>

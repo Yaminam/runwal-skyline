@@ -60,7 +60,7 @@ export const PROJECTS: Project[] = [
     "city": "Mumbai",
     "region": "South Mumbai",
     "status": "Ongoing",
-    "type": "Residential — ultra-luxury sky mansions",
+    "type": "Residential · ultra-luxury sky mansions",
     "configs": [
       {
         "label": "Simplex sky mansion",
@@ -146,7 +146,7 @@ export const PROJECTS: Project[] = [
     "tagline": "Uncompromised residences in the heart of Worli",
     "headline": "Where royalty resides in the heart of Worli",
     "lines": [
-      "Here, you don't adjust to life—life adjusts to you.",
+      "Here, you don't adjust to life; life adjusts to you.",
       "Drawing inspiration from the Sanskrit word Raay, meaning king or emperor",
       "Location: Worli's Golden Triangle"
     ],
@@ -155,7 +155,7 @@ export const PROJECTS: Project[] = [
     "city": "Mumbai",
     "region": "South Mumbai",
     "status": "Ongoing",
-    "type": "Residential — ultra-luxury, low-density (2 towers)",
+    "type": "Residential · ultra-luxury, low-density (2 towers)",
     "configs": [
       {
         "label": "3 Bed",
@@ -191,7 +191,7 @@ export const PROJECTS: Project[] = [
       }
     ],
     "floors": 44,
-    "description": "Drawing its name from the Sanskrit 'Raay' — king — Runwal Raaya is a low-density enclave of two towers on 5 acres in Worli's Golden Triangle. Its 3, 4 and 5-bed private residences come with private elevators, sun-kissed decks and Italian marble-clad lobbies, set within 2.5 acres of wellness-first landscaping.",
+    "description": "Drawing its name from the Sanskrit 'Raay', meaning king, Runwal Raaya is a low-density enclave of two towers on 5 acres in Worli's Golden Triangle. Its 3, 4 and 5-bed private residences come with private elevators, sun-kissed decks and Italian marble-clad lobbies, set within 2.5 acres of wellness-first landscaping.",
     "amenities": [
       "Indoor wellness pool & spa (branded spa, heated pool per FAQ)",
       "2.5-acre wellness-first landscaping",
@@ -215,7 +215,7 @@ export const PROJECTS: Project[] = [
       "All of Mumbai within ~30 minutes"
     ],
     "awards": [
-      "Luxury Project of the Year 2025 – Regional"
+      "Luxury Project of the Year 2025, Regional"
     ],
     "rera": [
       "P51900080218",
@@ -315,7 +315,7 @@ export const PROJECTS: Project[] = [
       }
     ],
     "floors": 36,
-    "description": "Set in Wadala, Mumbai's emerging transport hub, Runwal Timeless is about giving time back — trains, monorail, metro and the Eastern Freeway are minutes away. Its 2 and 3 BHK homes are crowned by a 22,000 sq ft rooftop Sky Promenade and 50+ lifestyle amenities.",
+    "description": "Set in Wadala, Mumbai's emerging transport hub, Runwal Timeless is about giving time back: trains, monorail, metro and the Eastern Freeway are minutes away. Its 2 and 3 BHK homes are crowned by a 22,000 sq ft rooftop Sky Promenade and 50+ lifestyle amenities.",
     "amenities": [
       "22,000 sq ft rooftop Sky Promenade",
       "Sports bar",
@@ -338,7 +338,7 @@ export const PROJECTS: Project[] = [
       "Double-height entrance lobby; select private-deck residences"
     ],
     "awards": [
-      "Fastest Selling Project of the Year — Ace Alpha Awards 2022"
+      "Fastest Selling Project of the Year, Ace Alpha Awards 2022"
     ],
     "rera": [
       "P51900005685"
@@ -395,7 +395,7 @@ export const PROJECTS: Project[] = [
     "city": "Mumbai",
     "region": "Western Suburbs",
     "status": "Ongoing",
-    "type": "Residential — boutique (50 apartments)",
+    "type": "Residential · boutique (50 apartments)",
     "configs": [
       {
         "label": "2 BHK",
@@ -496,7 +496,7 @@ export const PROJECTS: Project[] = [
     "city": "Mumbai",
     "region": "Western Suburbs",
     "status": "Ongoing",
-    "type": "Residential — luxury high-rise",
+    "type": "Residential · luxury high-rise",
     "configs": [
       {
         "label": "3 BHK",
@@ -527,7 +527,7 @@ export const PROJECTS: Project[] = [
       }
     ],
     "floors": 58,
-    "description": "Rising above an expansive 8-acre parcel on Link Road, Malad West, Runwal Auris is conceived for low-density living, with the first homes beginning roughly 100 feet above ground. Landscaped decks rise over the parking podiums, views open out and noise recedes — calm by design. 3 and 4-bed residences come with generous decks, tall ceilings and cross-ventilation.",
+    "description": "Rising above an expansive 8-acre parcel on Link Road, Malad West, Runwal Auris is conceived for low-density living, with the first homes beginning roughly 100 feet above ground. Landscaped decks rise over the parking podiums, views open out and noise recedes. Calm by design. 3 and 4-bed residences come with generous decks, tall ceilings and cross-ventilation.",
     "amenities": [
       "4-acre elevated eco-deck",
       "2-acre wellness-first landscaping",
@@ -605,7 +605,7 @@ export const PROJECTS: Project[] = [
     "city": "Mumbai",
     "region": "Central Suburbs",
     "status": "Ongoing",
-    "type": "Residential — green community",
+    "type": "Residential · green community",
     "configs": [
       {
         "label": "2 BHK",
@@ -720,7 +720,7 @@ export const PROJECTS: Project[] = [
     "city": "Thane",
     "region": "Thane",
     "status": "Ongoing",
-    "type": "Residential — mixed-use township",
+    "type": "Residential · mixed-use township",
     "configs": [
       {
         "label": "1 BHK",
@@ -779,9 +779,9 @@ export const PROJECTS: Project[] = [
       "Majiwada Junction 3.1 km; Viviana Mall & Jupiter Hospital 5.2 km"
     ],
     "awards": [
-      "Best Mixed-Use Development India — Asia Pacific Property Awards",
+      "Best Mixed-Use Development India, Asia Pacific Property Awards",
       "Mixed Use Project Of The Year (2026)",
-      "Iconic Residential Project of the Year — Times Real Estate Conclave 2023-24",
+      "Iconic Residential Project of the Year, Times Real Estate Conclave 2023-24",
       "LEED Platinum (2026)"
     ],
     "rera": [
@@ -851,7 +851,7 @@ export const PROJECTS: Project[] = [
     "city": "Thane",
     "region": "Thane",
     "status": "Ongoing",
-    "type": "Residential — standalone 3 BHK tower",
+    "type": "Residential · standalone 3 BHK tower",
     "configs": [
       {
         "label": "3 BHK",
@@ -957,7 +957,7 @@ export const PROJECTS: Project[] = [
     "city": "Thane",
     "region": "Thane",
     "status": "Ongoing",
-    "type": "Residential — low-density riverside township",
+    "type": "Residential · low-density riverside township",
     "configs": [
       {
         "label": "1 BHK",
@@ -1014,8 +1014,7 @@ export const PROJECTS: Project[] = [
     "rera": [
       "P51700046298",
       "PR1330002502164",
-      "P51700056121",
-      "P51700033799 — uncertain)"
+      "P51700056121"
     ],
     "lat": 19.228,
     "lon": 73.005,
@@ -1073,7 +1072,7 @@ export const PROJECTS: Project[] = [
     "city": "Pune",
     "region": "Pune",
     "status": "Ongoing",
-    "type": "Residential — integrated mixed-use township",
+    "type": "Residential · integrated mixed-use township",
     "configs": [
       {
         "label": "2 BHK",
@@ -1194,7 +1193,7 @@ export const COMMERCIAL: Project[] = [
     "city": "Mumbai",
     "region": "Western Suburbs",
     "status": "Ongoing",
-    "type": "Commercial — Grade A office",
+    "type": "Commercial · Grade A office",
     "configs": [
       {
         "label": "Typical floor plate",
@@ -1247,7 +1246,7 @@ export const COMMERCIAL: Project[] = [
       "Landscaped walkways"
     ],
     "awards": [
-      "Most Environment-Friendly Commercial/Office Space — Realty+ Conclave & Excellence Awards 2024 West"
+      "Most Environment-Friendly Commercial/Office Space, Realty+ Conclave & Excellence Awards 2024 West"
     ],
     "rera": [],
     "lat": 19.115,
@@ -1287,7 +1286,7 @@ export const COMMERCIAL: Project[] = [
     "city": "Mumbai",
     "region": "Central Suburbs",
     "status": "Ready to move",
-    "type": "Commercial — boutique offices",
+    "type": "Commercial · boutique offices",
     "configs": [
       {
         "label": "Boutique offices",
