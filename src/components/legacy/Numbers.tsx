@@ -15,14 +15,14 @@ export function Numbers() {
       </div>
       <dl className="mt-16 grid grid-cols-2 border-l border-t border-graphite/15 md:grid-cols-5">
         {STATS.map((s) => (
-          <div key={s.label} className="flex min-h-56 flex-col justify-between border-b border-r border-graphite/15 bg-stone/70 p-5 backdrop-blur-[2px] md:p-7" data-fade>
+          <div key={s.label} className="flex min-h-56 flex-col justify-between gap-6 border-b border-r border-graphite/15 bg-stone/70 p-5 backdrop-blur-[2px] md:p-7" data-fade>
             <dt className="kicker text-mute">{s.label}</dt>
             <dd>
-              <span className="display block text-[13vw] md:text-[min(5vw,5.6rem)]">
+              <span className="display block whitespace-nowrap text-[11vw] md:text-[min(3.9vw,4.6rem)]">
                 <Counter to={s.value} decimals={"decimals" in s ? s.decimals : 0} />
-                <span className="text-[0.4em] tracking-normal">{s.suffix}</span>
+                <span className="ml-[0.12em] text-[0.38em] tracking-normal">{s.suffix}</span>
               </span>
-              <span className="mt-3 block text-sm leading-snug text-mute">{s.note}</span>
+              <span className="mt-3 block min-h-[2.75em] text-sm leading-snug text-mute">{s.note}</span>
             </dd>
           </div>
         ))}

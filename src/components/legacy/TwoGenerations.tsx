@@ -34,8 +34,7 @@ export function TwoGenerations() {
       ctx = gsap.context(() => {
         const st = { trigger: el, start: "top 70%", end: "center 40%", scrub: 0.6 };
         // blueprint veil wipes off the portrait, the photo settles from a zoom
-        gsap.fromTo(".tg-veil", { clipPath: "inset(0% 0% 0% 0%)" }, { clipPath: "inset(0% 0% 100% 0%)", ease: "none", scrollTrigger: st });
-        gsap.fromTo(".tg-photo", { scale: 1.18, filter: "grayscale(1) contrast(1.1)" }, { scale: 1, filter: "grayscale(0) contrast(1)", ease: "none", scrollTrigger: st });
+        gsap.fromTo(".tg-photo", { scale: 1.08, filter: "grayscale(0.6)" }, { scale: 1, filter: "grayscale(0)", ease: "none", scrollTrigger: st });
         gsap.fromTo(".tg-word", { opacity: 0.12 }, { opacity: 1, stagger: 0.06, ease: "none", scrollTrigger: { trigger: ".tg-line", start: "top 80%", end: "bottom 50%", scrub: 0.5 } });
         gsap.fromTo(".tg-promise", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 1.2, ease: "expo.out", scrollTrigger: { trigger: ".tg-line", start: "bottom 60%", once: true } });
         // relay baton
@@ -83,14 +82,8 @@ export function TwoGenerations() {
             <div className="tg-photo absolute inset-0">
               <Pic src={MD.image} alt={MD.name} fill sizes="(min-width: 768px) 30vw, 90vw" className="object-[50%_30%]" />
             </div>
-            {/* blueprint veil */}
-            <div className="tg-veil absolute inset-0 bg-dusk" aria-hidden>
-              <div className="blueprint-dark absolute inset-0 opacity-100" />
-              <div className="absolute inset-6 border border-white/40" />
-              <div className="absolute left-1/2 top-[34%] size-28 -translate-x-1/2 rounded-full border border-white/50" />
-              <div className="absolute inset-x-[22%] bottom-0 top-[56%] rounded-t-[40%] border border-b-0 border-white/50" />
-              <p className="kicker absolute bottom-8 left-8 text-white/80">Fig. 02 &middot; The second generation</p>
-            </div>
+            {/* a hairline drawing frame over the portrait; the face always shows */}
+            <div className="pointer-events-none absolute inset-5 border border-white/35" aria-hidden />
             <span className="kicker absolute left-4 top-4 z-10 bg-paper/90 px-2 py-1 text-graphite">Since 1993</span>
           </div>
           <p className="kicker mt-6 text-mute">{MD.title}</p>

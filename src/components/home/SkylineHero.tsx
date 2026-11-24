@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { whenRevealed } from "@/lib/gate";
 import { clamp, prefersReducedMotion, smoothstep } from "@/lib/motion";
+import { usePhotoreal } from "../three/photoreal-state";
 import { LANDMARKS, labels, skyline } from "../three/skyline-state";
 import { Magnetic } from "../site/Magnetic";
 import { TLink } from "../site/Transition";
@@ -67,12 +68,46 @@ function clock(p: number) {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
+/**
+ * Data credit. Sentinel-2 imagery (EOX, CC BY-NC-SA 4.0) + OSM buildings for the satellite city; for Google Photorealistic 3D Tiles the Google logo and the
+ * tiles' own copyright line must stay visible whenever tiles are on screen (all screen sizes).
+ */
+function MapCredit() {
+  const { status, attribution } = usePhotoreal();
+  const [logoOk, setLogoOk] = useState(true);
+  if (status === "ready") {
+    return (
+      <div className="pointer-events-auto absolute bottom-14 right-6 z-10 flex max-w-[70vw] items-center gap-2 rounded-sm bg-black/35 px-2 py-1 text-[10px] leading-tight text-white backdrop-blur-sm md:bottom-16 md:right-10">
+        {logoOk ? (
+          // official Google logo, see _tools/photoreal.md
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src="/vendor/google-logo.png" alt="Google" className="h-[14px] w-auto" onError={() => setLogoOk(false)} />
+        ) : (
+          <span className="font-medium tracking-tight">Google</span>
+        )}
+        {attribution && <span className="truncate opacity-90">{attribution}</span>}
+      </div>
+    );
+  }
+  if (status === "loading") return null;
+  return (
+    <p className="kicker absolute right-6 top-[10.25rem] hidden max-w-[26rem] text-right text-[0.58rem]! leading-relaxed opacity-45 md:right-10 md:top-[11.5rem] md:block">
+      Imagery: Sentinel-2 cloudless by EOX (Copernicus data 2024) &middot; Buildings &copy; OpenStreetMap contributors
+    </p>
+  );
+}
+
 export function SkylineHero() {
   const section = useRef<HTMLElement>(null);
   const overlay = useRef<HTMLDivElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   const time = useRef<HTMLSpanElement>(null);
   const bar = useRef<HTMLDivElement>(null);
+  const finScrim = useRef<HTMLDivElement>(null);
+  const handoff = useRef<HTMLDivElement>(null);
+  const handLine = useRef<HTMLDivElement>(null);
+  const hud = useRef<HTMLDivElement>(null);
+  const chip = useRef<HTMLSpanElement>(null);
   const [active, setActive] = useState(true);
 
   useEffect(() => {
@@ -108,8 +143,15 @@ export function SkylineHero() {
         n.style.transform = `translateY(${(1 - a) * (p < c.from + 0.05 ? 36 : -36)}px)`;
         n.style.visibility = a < 0.01 ? "hidden" : "visible";
       });
+      // finale: copy only after the constellation has drawn; then the night hands off to the page
+      const fin = smoothstep(0.86, 0.9, p);
+      if (finScrim.current) finScrim.current.style.opacity = String(smoothstep(0.93, 0.97, p));
+      if (handoff.current) handoff.current.style.opacity = String(smoothstep(0.975, 1.0, p));
+      if (handLine.current) handLine.current.style.transform = `scaleX(${smoothstep(0.965, 1.0, p)})`;
+      if (hud.current) hud.current.style.opacity = String(1 - fin);
+      if (chip.current) chip.current.style.opacity = String(smoothstep(0.952, 0.962, p));
       if (finale) {
-        const a = smoothstep(0.88, 0.95, p);
+        const a = smoothstep(0.952, 0.975, p);
         finale.style.opacity = String(a);
         finale.style.transform = `translateY(${(1 - a) * 36}px)`;
         finale.style.visibility = a < 0.01 ? "hidden" : "visible";
@@ -168,7 +210,7 @@ export function SkylineHero() {
               className="absolute left-0 top-0 whitespace-nowrap opacity-0 will-change-transform"
             >
               <div className="flex flex-col items-center gap-1.5">
-                <span className="border border-white/25 bg-graphite/75 px-3 py-1.5 text-[11px] font-medium tracking-wide text-white backdrop-blur-md">{l.name}</span>
+                <span className="border border-white/25 bg-graphite/90 px-3 py-1.5 text-[11px] font-medium tracking-wide text-white">{l.name}</span>
                 <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-white [text-shadow:0_1px_8px_rgba(0,0,0,.6)]">{l.area}</span>
                 <span className="h-7 w-px bg-gradient-to-b from-amber to-transparent" />
               </div>
@@ -183,6 +225,15 @@ export function SkylineHero() {
           aria-hidden
           className="pointer-events-none absolute inset-0 transition-[background] duration-700 data-[ink=dark]:bg-[linear-gradient(to_top_right,rgba(238,235,229,0.92)_0%,rgba(238,235,229,0.55)_32%,rgba(238,235,229,0)_58%)] data-[ink=light]:bg-[linear-gradient(to_top_right,rgba(10,12,16,0.85)_0%,rgba(10,12,16,0.5)_32%,rgba(10,12,16,0)_60%)]"
         />
+
+        {/* finale scrim: the copy never sits on busy city */}
+        <div
+          ref={finScrim}
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-0 bg-[linear-gradient(to_top,rgba(13,16,21,0.94)_0%,rgba(13,16,21,0.7)_30%,rgba(13,16,21,0)_62%)]"
+        />
+        {/* hand-off: the night settles into the page's dark */}
+        <div ref={handoff} aria-hidden className="pointer-events-none absolute inset-0 bg-night opacity-0" />
 
         <div ref={overlay} data-ink="dark" className="pointer-events-none absolute inset-0 text-graphite transition-colors duration-500 data-[ink=light]:text-stone">
           {/* intro */}
@@ -234,7 +285,12 @@ export function SkylineHero() {
           <div data-finale className="invisible absolute inset-x-6 bottom-24 opacity-0 md:inset-x-10 md:bottom-28">
             <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
               <div>
-                <p className="kicker mb-5 text-amber">Every light, a family home</p>
+                <p className="kicker mb-5 flex flex-wrap items-center gap-3 text-amber">
+                  Every light, a family home
+                  <span ref={chip} className="inline-flex items-center gap-2 border border-amber/40 px-2 py-1 text-[0.62rem] text-stone/80 opacity-0">
+                    <span className="live-dot inline-block size-1.5 rounded-full bg-amber" /> 9 addresses lit
+                  </span>
+                </p>
                 <h2 className="display text-[11vw] md:text-[min(5.6vw,6.6rem)]">
                   35 delivered.
                   <br />
@@ -248,6 +304,9 @@ export function SkylineHero() {
             </div>
           </div>
 
+          {/* data credit for the real buildings, coastline and roads */}
+          <MapCredit />
+
           {/* HUD */}
           <div className="absolute right-6 top-24 hidden flex-col items-end gap-1 text-right md:right-10 md:top-28 md:flex" data-intro-fade>
             <span className="kicker opacity-60">Mumbai &middot; local time</span>
@@ -255,7 +314,7 @@ export function SkylineHero() {
               07:10
             </span>
           </div>
-          <div className="absolute inset-x-6 bottom-6 md:inset-x-10 md:bottom-8" data-intro-fade>
+          <div ref={hud} className="absolute inset-x-6 bottom-6 md:inset-x-10 md:bottom-8" data-intro-fade>
             <div className="relative h-px w-full bg-current/20">
               <div ref={bar} className="dusk-line absolute inset-0 origin-left scale-x-0" />
               {REGIONS.map((r) => (
@@ -265,6 +324,11 @@ export function SkylineHero() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* the beams' glow settles into one amber line: the top edge of the next section */}
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px">
+          <div ref={handLine} style={{ transform: "scaleX(0)" }} className="h-full w-full origin-center bg-amber shadow-[0_0_18px_3px_rgba(242,166,90,0.55)]" />
         </div>
       </div>
     </section>

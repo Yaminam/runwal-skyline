@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ArchitectureBand } from "@/components/legacy/ArchitectureBand";
 import { Awards } from "@/components/legacy/Awards";
 import { FortyEight } from "@/components/legacy/FortyEight";
 import { Leadership } from "@/components/legacy/Leadership";
@@ -24,6 +25,7 @@ export default function LegacyPage() {
       <FortyEight />
       <TimeMachine />
       <Numbers />
+      <ArchitectureBand />
       <Pillars />
       <Leadership />
       <Reel />
